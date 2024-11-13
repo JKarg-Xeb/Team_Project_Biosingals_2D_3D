@@ -36,8 +36,8 @@ def receive_vr_data():
         rotW = data['rotW']
     
         print("\n--- Empfangene VR-Daten ---")
-        print(f"Position: x={posX}, y={posY}, z={posZ}")
-        print(f"Rotation: x={rotX}, y={rotY}, z={rotZ}, w={rotW}")
+        print(f"Positions: x={posX}, y={posY}, z={posZ}")
+        print(f"Rotations: x={rotX}, y={rotY}, z={rotZ}, w={rotW}")
         print("---------------------------\n")
     
                 # Umwandlung in Euler-Winkel
