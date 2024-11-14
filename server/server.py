@@ -60,5 +60,48 @@ def receive_vr_data():
         return jsonify({"error": f"Fehlendes Feld: {e.args[0]}"}), 400
     return jsonify({"message": "VR-Daten empfangen"}), 200
 
+
+@app.route('/send_vr_data_OpenX', methods=['POST'])
+def receive_vr_data_OpenX():
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Keine JSON-Daten empfangen"}), 400
+
+    try:
+        posX = data['posX']
+        posY = data['posY']
+        posZ = data['posZ']
+        rotX = data['rotX']
+        rotY = data['rotY']
+        rotZ = data['rotZ']
+        rotW = data['rotW']
+    
+        print("\n--- Empfangene VR-Daten von OpenX ---")
+        print(f"Positions: x={posX}, y={posY}, z={posZ}")
+        print(f"Rotations: x={rotX}, y={rotY}, z={rotZ}, w={rotW}")
+        print("---------------------------\n")
+    
+                # Umwandlung in Euler-Winkel
+        quaternion = [rotX, rotY, rotZ, rotW]
+        rotation = R.from_quat(quaternion)
+        euler_angles = rotation.as_euler('xyz', degrees=True)
+    
+        # Daten per WebSocket an alle verbundenen Clients senden
+        updated_data = {
+            'posX': posX,
+            'posY': posY,
+            'posZ': posZ,
+            'pitch': euler_angles[0],
+            'yaw': euler_angles[1],
+            'roll': euler_angles[2]
+        }
+        socketio.emit('update_graph', updated_data)
+
+    except KeyError as e:
+        return jsonify({"error": f"Fehlendes Feld: {e.args[0]}"}), 400
+    return jsonify({"message": "VR-Daten empfangen von OpenX"}), 200
+
+    
+
 if __name__ == "__main__": 
     socketio.run(app, debug=True, port=8080)
