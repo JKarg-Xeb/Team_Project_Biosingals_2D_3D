@@ -31,9 +31,19 @@ interface VRRotationData {
 }
 
 interface VREyeTrackingData extends VRRotationData {
-    gazeX: number;
-    gazeY: number;
-    gazeZ: number;
+    leftGazeDirX: number;
+    leftGazeDirY: number;
+    leftGazeDirZ: number;
+    leftGazeOriginX: number;
+    leftGazeOriginY: number;
+    leftGazeOriginZ: number;
+    rightGazeDirX: number;
+    rightGazeDirY: number;
+    rightGazeDirZ: number;
+    rightGazeOriginX: number;
+    rightGazeOriginY: number;
+    rightGazeOriginZ: number;
+    timestamp: string;
 }
 
 function WebSocketComponent() {
@@ -93,7 +103,15 @@ function WebSocketComponent() {
 
     // Funktion zum Herunterladen der Eye-Tracking-Daten als CSV
     const downloadEyeTrackingCSV = () => {
-        const headers = ['Timestamp', 'Position X', 'Position Y', 'Position Z', 'Pitch', 'Yaw', 'Roll', 'Gaze X', 'Gaze Y', 'Gaze Z'];
+        const headers = [
+            'Timestamp', 
+            'Position X', 'Position Y', 'Position Z', 
+            'Pitch', 'Yaw', 'Roll', 
+            'Left Gaze Dir X', 'Left Gaze Dir Y', 'Left Gaze Dir Z', 
+            'Left Gaze Origin X', 'Left Gaze Origin Y', 'Left Gaze Origin Z', 
+            'Right Gaze Dir X', 'Right Gaze Dir Y', 'Right Gaze Dir Z', 
+            'Right Gaze Origin X', 'Right Gaze Origin Y', 'Right Gaze Origin Z'
+        ];
         const rows = eyeTrackingData.map((data, index) => [
             eyeTrackingLabels[index],
             data.posX,
@@ -102,9 +120,18 @@ function WebSocketComponent() {
             data.pitch,
             data.yaw,
             data.roll,
-            data.gazeX,
-            data.gazeY,
-            data.gazeZ
+            data.leftGazeDirX,
+            data.leftGazeDirY,
+            data.leftGazeDirZ,
+            data.leftGazeOriginX,
+            data.leftGazeOriginY,
+            data.leftGazeOriginZ,
+            data.rightGazeDirX,
+            data.rightGazeDirY,
+            data.rightGazeDirZ,
+            data.rightGazeOriginX,
+            data.rightGazeOriginY,
+            data.rightGazeOriginZ
         ]);
 
         const csvContent =
@@ -198,20 +225,75 @@ function WebSocketComponent() {
         labels: displayedEyeTrackingLabels,
         datasets: [
             {
-                label: 'Gaze X',
-                data: displayedEyeTrackingData.map((data) => data.gazeX),
+                label: 'Left Gaze Dir X',
+                data: displayedEyeTrackingData.map((data) => data.leftGazeDirX),
                 borderColor: 'rgb(255, 99, 132)',
                 fill: false,
             },
             {
-                label: 'Gaze Y',
-                data: displayedEyeTrackingData.map((data) => data.gazeY),
+                label: 'Left Gaze Dir Y',
+                data: displayedEyeTrackingData.map((data) => data.leftGazeDirY),
                 borderColor: 'rgb(54, 162, 235)',
                 fill: false,
             },
             {
-                label: 'Gaze Z',
-                data: displayedEyeTrackingData.map((data) => data.gazeZ),
+                label: 'Left Gaze Dir Z',
+                data: displayedEyeTrackingData.map((data) => data.leftGazeDirZ),
+                borderColor: 'rgb(75, 192, 192)',
+                fill: false,
+            },
+            {
+                label: 'Right Gaze Dir X',
+                data: displayedEyeTrackingData.map((data) => data.rightGazeDirX),
+                borderColor: 'rgb(255, 206, 86)',
+                fill: false,
+            },
+            {
+                label: 'Right Gaze Dir Y',
+                data: displayedEyeTrackingData.map((data) => data.rightGazeDirY),
+                borderColor: 'rgb(153, 102, 255)',
+                fill: false,
+            },
+            {
+                label: 'Right Gaze Dir Z',
+                data: displayedEyeTrackingData.map((data) => data.rightGazeDirZ),
+                borderColor: 'rgb(255, 159, 64)',
+                fill: false,
+            },
+            // Optional: Gaze Origins können ebenfalls dargestellt werden
+            {
+                label: 'Left Gaze Origin X',
+                data: displayedEyeTrackingData.map((data) => data.leftGazeOriginX),
+                borderColor: 'rgb(75, 192, 192)',
+                fill: false,
+            },
+            {
+                label: 'Left Gaze Origin Y',
+                data: displayedEyeTrackingData.map((data) => data.leftGazeOriginY),
+                borderColor: 'rgb(153, 102, 255)',
+                fill: false,
+            },
+            {
+                label: 'Left Gaze Origin Z',
+                data: displayedEyeTrackingData.map((data) => data.leftGazeOriginZ),
+                borderColor: 'rgb(255, 206, 86)',
+                fill: false,
+            },
+            {
+                label: 'Right Gaze Origin X',
+                data: displayedEyeTrackingData.map((data) => data.rightGazeOriginX),
+                borderColor: 'rgb(255, 99, 132)',
+                fill: false,
+            },
+            {
+                label: 'Right Gaze Origin Y',
+                data: displayedEyeTrackingData.map((data) => data.rightGazeOriginY),
+                borderColor: 'rgb(54, 162, 235)',
+                fill: false,
+            },
+            {
+                label: 'Right Gaze Origin Z',
+                data: displayedEyeTrackingData.map((data) => data.rightGazeOriginZ),
                 borderColor: 'rgb(75, 192, 192)',
                 fill: false,
             },
@@ -248,7 +330,7 @@ function WebSocketComponent() {
         },
         scales: {
             x: { title: { display: true, text: 'Zeit' } },
-            y: { title: { display: true, text: 'Gaze' } },
+            y: { title: { display: true, text: 'Gaze / Origin' } },
         },
     };
 

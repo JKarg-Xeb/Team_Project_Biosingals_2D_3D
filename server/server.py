@@ -31,7 +31,15 @@ def initialize_csv(file_path, headers):
 
 # Initialisiere die CSV-Dateien
 initialize_csv(rotation_csv, ['timestamp', 'posX', 'posY', 'posZ', 'pitch', 'yaw', 'roll'])
-initialize_csv(eyetracking_csv, ['timestamp', 'posX', 'posY', 'posZ', 'pitch', 'yaw', 'roll', 'gazeX', 'gazeY', 'gazeZ'])
+initialize_csv(eyetracking_csv, [
+    'timestamp', 
+    'posX', 'posY', 'posZ', 
+    'pitch', 'yaw', 'roll', 
+    'leftGazeDirX', 'leftGazeDirY', 'leftGazeDirZ', 
+    'leftGazeOriginX', 'leftGazeOriginY', 'leftGazeOriginZ', 
+    'rightGazeDirX', 'rightGazeDirY', 'rightGazeDirZ', 
+    'rightGazeOriginX', 'rightGazeOriginY', 'rightGazeOriginZ'
+])
 
 # API-Endpunkte
 @app.route("/api/graph-data", methods=['GET'])
@@ -98,7 +106,6 @@ def receive_vr_data_rotation():
 
     return jsonify({"message": "VR-Rotationsdaten empfangen"}), 200
 
-
 @app.route('/send_vr_data_eyetracking', methods=['POST'])
 def receive_vr_data_eyetracking():
     data = request.get_json()
@@ -116,14 +123,28 @@ def receive_vr_data_eyetracking():
         rotY = data['rotY']
         rotZ = data['rotZ']
         rotW = data['rotW']
-        gazeX = data.get('gazeX', 0.0)  # Optional, falls Eye-Tracking Daten vorhanden sind
-        gazeY = data.get('gazeY', 0.0)
-        gazeZ = data.get('gazeZ', 0.0)
+        
+        # Linkes Auge
+        leftGazeDirX = data.get('leftGazeDirX', 0.0)
+        leftGazeDirY = data.get('leftGazeDirY', 0.0)
+        leftGazeDirZ = data.get('leftGazeDirZ', 0.0)
+        leftGazeOriginX = data.get('leftGazeOriginX', 0.0)
+        leftGazeOriginY = data.get('leftGazeOriginY', 0.0)
+        leftGazeOriginZ = data.get('leftGazeOriginZ', 0.0)
+        
+        # Rechtes Auge
+        rightGazeDirX = data.get('rightGazeDirX', 0.0)
+        rightGazeDirY = data.get('rightGazeDirY', 0.0)
+        rightGazeDirZ = data.get('rightGazeDirZ', 0.0)
+        rightGazeOriginX = data.get('rightGazeOriginX', 0.0)
+        rightGazeOriginY = data.get('rightGazeOriginY', 0.0)
+        rightGazeOriginZ = data.get('rightGazeOriginZ', 0.0)
 
         logging.info("\n--- Empfangene VR-Eye-Tracking-Daten ---")
         logging.info(f"Positions: x={posX}, y={posY}, z={posZ}")
         logging.info(f"Rotations: x={rotX}, y={rotY}, z={rotZ}, w={rotW}")
-        logging.info(f"Eye Gaze: x={gazeX}, y={gazeY}, z={gazeZ}")
+        logging.info(f"Linkes Auge Gaze: dir=({leftGazeDirX}, {leftGazeDirY}, {leftGazeDirZ}), origin=({leftGazeOriginX}, {leftGazeOriginY}, {leftGazeOriginZ})")
+        logging.info(f"Rechtes Auge Gaze: dir=({rightGazeDirX}, {rightGazeDirY}, {rightGazeDirZ}), origin=({rightGazeOriginX}, {rightGazeOriginY}, {rightGazeOriginZ})")
         logging.info("---------------------------\n")
 
         # Umwandlung in Euler-Winkel
@@ -139,15 +160,32 @@ def receive_vr_data_eyetracking():
             'pitch': euler_angles[0],
             'yaw': euler_angles[1],
             'roll': euler_angles[2],
-            'gazeX': gazeX,
-            'gazeY': gazeY,
-            'gazeZ': gazeZ
+            'leftGazeDirX': leftGazeDirX,
+            'leftGazeDirY': leftGazeDirY,
+            'leftGazeDirZ': leftGazeDirZ,
+            'leftGazeOriginX': leftGazeOriginX,
+            'leftGazeOriginY': leftGazeOriginY,
+            'leftGazeOriginZ': leftGazeOriginZ,
+            'rightGazeDirX': rightGazeDirX,
+            'rightGazeDirY': rightGazeDirY,
+            'rightGazeDirZ': rightGazeDirZ,
+            'rightGazeOriginX': rightGazeOriginX,
+            'rightGazeOriginY': rightGazeOriginY,
+            'rightGazeOriginZ': rightGazeOriginZ
         }
         socketio.emit('update_graph_eyetracking', updated_data)  # Separater Event
 
         # Daten in CSV speichern
         timestamp = datetime.utcnow().isoformat()
-        row = [timestamp, posX, posY, posZ, euler_angles[0], euler_angles[1], euler_angles[2], gazeX, gazeY, gazeZ]
+        row = [
+            timestamp, 
+            posX, posY, posZ, 
+            euler_angles[0], euler_angles[1], euler_angles[2], 
+            leftGazeDirX, leftGazeDirY, leftGazeDirZ, 
+            leftGazeOriginX, leftGazeOriginY, leftGazeOriginZ, 
+            rightGazeDirX, rightGazeDirY, rightGazeDirZ, 
+            rightGazeOriginX, rightGazeOriginY, rightGazeOriginZ
+        ]
         with open(eyetracking_csv, mode='a', newline='') as file:
             writer = csv.writer(file)
             writer.writerow(row)
@@ -161,7 +199,6 @@ def receive_vr_data_eyetracking():
         return jsonify({"error": "Fehler beim Verarbeiten der Daten"}), 500
 
     return jsonify({"message": "VR-Eye-Tracking-Daten empfangen"}), 200
-
 
 if __name__ == "__main__": 
     socketio.run(app, debug=True, port=8080)
