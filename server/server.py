@@ -34,7 +34,6 @@ initialize_csv(rotation_csv, ['timestamp', 'posX', 'posY', 'posZ', 'pitch', 'yaw
 initialize_csv(eyetracking_csv, ['timestamp', 'posX', 'posY', 'posZ', 'pitch', 'yaw', 'roll', 'gazeX', 'gazeY', 'gazeZ'])
 
 # API-Endpunkte
-#Graphik
 @app.route("/api/graph-data", methods=['GET'])
 def graph_data():
     data = {
@@ -80,7 +79,7 @@ def receive_vr_data_rotation():
             'yaw': euler_angles[1],
             'roll': euler_angles[2]
         }
-        socketio.emit('update_graph', updated_data)
+        socketio.emit('update_graph_rotation', updated_data)  # Separater Event
 
         # Daten in CSV speichern
         timestamp = datetime.utcnow().isoformat()
@@ -144,15 +143,15 @@ def receive_vr_data_eyetracking():
             'gazeY': gazeY,
             'gazeZ': gazeZ
         }
-        socketio.emit('update_graph', updated_data)
+        socketio.emit('update_graph_eyetracking', updated_data)  # Separater Event
 
         # Daten in CSV speichern
-        timestamp = datetime.now().isoformat()
+        timestamp = datetime.utcnow().isoformat()
         row = [timestamp, posX, posY, posZ, euler_angles[0], euler_angles[1], euler_angles[2], gazeX, gazeY, gazeZ]
         with open(eyetracking_csv, mode='a', newline='') as file:
             writer = csv.writer(file)
             writer.writerow(row)
-        logging.info(f"Eye-Tracking Daten gespeichert: {row}")
+        logging.info(f"Eye-Tracking-Daten gespeichert: {row}")
 
     except KeyError as e:
         logging.error(f"Fehlendes Feld: {e.args[0]}")
