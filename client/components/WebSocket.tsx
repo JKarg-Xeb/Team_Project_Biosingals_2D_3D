@@ -335,7 +335,7 @@ function WebSocketComponent() {
     };
 
     return (
-        <div className='basis-4/12'>
+        <div className='basis-11/12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
             {/* Rotationsdaten */}
             <div className=''>
                 <h1>Data-Position</h1>
@@ -353,34 +353,38 @@ function WebSocketComponent() {
             </div>
 
             {/* Rotationsdiagramm */}
-            <div></div>
-            <h1 className='justify-center mt-5'>Data-Rotation</h1>
-            <h2>{showFullGraph ? 'Total VR Data History' : 'Live VR Data'}</h2>
-            <Line data={chartData_rotation} options={options_rotation} />
-            <div className="mt-4 flex space-x-2 justify-center items-center gap-10">
-                <button
-                    onClick={toggleGraphView}
-                    className="px-4 py-2 border-2 border-spacing-5 border-blue-100 hover:bg-blue-500 text-white rounded"
-                >
-                    {showFullGraph ? 'Live Graph' : 'Ganzen Graph'}
-                </button>
-                <Image onClick={downloadRotationCSV} src="/svg/download_button.svg" alt="Download Rotation CSV" width={25} height={25} className='mr-3 cursor-pointer transform transition-transform duration-200 hover:scale-125'/>
+            <div>
+                <h1 className='justify-center mt-5'>Data-Rotation</h1>
+                <h2>{showFullGraph ? 'Total VR Data History' : 'Live VR Data'}</h2>
+                <Line data={chartData_rotation} options={options_rotation} />
+                <div className="mt-4 flex space-x-2 justify-center items-center gap-10">
+                    <button
+                        onClick={toggleGraphView}
+                        className="px-4 py-2 border-2 border-spacing-5 border-blue-100 hover:bg-blue-500 text-white rounded"
+                    >
+                        {showFullGraph ? 'Live Graph' : 'Ganzen Graph'}
+                    </button>
+                    <Image onClick={downloadRotationCSV} src="/svg/download_button.svg" alt="Download Rotation CSV" width={25} height={25} className='mr-3 cursor-pointer transform transition-transform duration-200 hover:scale-125'/>
+                </div>
             </div>
+ 
 
             {/* Eye-Tracking-Daten */}
-            <div></div>
-            <h1 className='justify-center mt-5'>Data-EyeTracking</h1>
-            <h2>{showFullGraph ? 'Total VR Data History' : 'Live VR Data'}</h2>
-            <Line data={chartData_eyetracking} options={options_eyetracking} />
-            <div className="mt-4 flex space-x-2 justify-center items-center gap-10">
-                <button
-                    onClick={toggleGraphView}
-                    className="px-4 py-2 border-2 border-spacing-5 border-blue-100 hover:bg-blue-500 text-white rounded"
-                >
-                    {showFullGraph ? 'Live Graph' : 'Ganzen Graph'}
-                </button>
-                <Image onClick={downloadEyeTrackingCSV} src="/svg/download_button.svg" alt="Download Eye-Tracking CSV" width={25} height={25} className='mr-3 cursor-pointer transform transition-transform duration-200 hover:scale-125'/>
+            <div>
+                <h1 className='justify-center mt-5'>Data-EyeTracking</h1>
+                <h2>{showFullGraph ? 'Total VR Data History' : 'Live VR Data'}</h2>
+                <Line data={chartData_eyetracking} options={options_eyetracking} />
+                <div className="mt-4 flex space-x-2 justify-center items-center gap-10">
+                    <button
+                        onClick={toggleGraphView}
+                        className="px-4 py-2 border-2 border-spacing-5 border-blue-100 hover:bg-blue-500 text-white rounded"
+                    >
+                        {showFullGraph ? 'Live Graph' : 'Ganzen Graph'}
+                    </button>
+                    <Image onClick={downloadEyeTrackingCSV} src="/svg/download_button.svg" alt="Download Eye-Tracking CSV" width={25} height={25} className='mr-3 cursor-pointer transform transition-transform duration-200 hover:scale-125'/>
+                </div>
             </div>
+            
         </div>
     );
 };

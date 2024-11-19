@@ -50,6 +50,13 @@ def graph_data():
     }
     return jsonify(data)
 
+@app.route('/eye_tracking', methods=['POST'])
+def receive_eye_data():
+    data = request.get_json()
+    print(f"Empfangene Eye-Tracking-Daten: {data}")
+    return jsonify({"status": "success"}), 200
+
+
 @app.route('/send_vr_data_rotation', methods=['POST'])
 def receive_vr_data_rotation():
     data = request.get_json()
@@ -199,6 +206,10 @@ def receive_vr_data_eyetracking():
         return jsonify({"error": "Fehler beim Verarbeiten der Daten"}), 500
 
     return jsonify({"message": "VR-Eye-Tracking-Daten empfangen"}), 200
+
+
+
+    
 
 if __name__ == "__main__": 
     socketio.run(app, debug=True, port=8080)
