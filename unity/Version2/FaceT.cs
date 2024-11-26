@@ -16,9 +16,10 @@ public class FaceTrackingLogger : MonoBehaviour
     private float lidTension = 0f;
     private float lipPress = 0f;
 
-    // Verkrampftheit und Konzentration
+    // Hauptwerte
     private float tensionValue = 0f;
     private float concentrationValue = 0f;
+    private float happinessValue = 0f;
 
     void Start()
     {
@@ -84,6 +85,18 @@ public class FaceTrackingLogger : MonoBehaviour
         lipPress = (faceExpressions[OVRFaceExpressions.FaceExpression.LipTightenerL] +
                     faceExpressions[OVRFaceExpressions.FaceExpression.LipTightenerR]) / 2f;
 
+        // Fröhlichkeit berechnen
+        float lipCornerPuller = (faceExpressions[OVRFaceExpressions.FaceExpression.LipCornerPullerL] +
+                                 faceExpressions[OVRFaceExpressions.FaceExpression.LipCornerPullerR]) / 2f;
+
+        float cheekRaiser = (faceExpressions[OVRFaceExpressions.FaceExpression.CheekRaiserL] +
+                             faceExpressions[OVRFaceExpressions.FaceExpression.CheekRaiserR]) / 2f;
+
+        float noseWrinkler = (faceExpressions[OVRFaceExpressions.FaceExpression.NoseWrinklerL] +
+                              faceExpressions[OVRFaceExpressions.FaceExpression.NoseWrinklerR]) / 2f;
+
+        happinessValue = Mathf.Clamp01(0.5f * lipCornerPuller + 0.3f * cheekRaiser + 0.2f * noseWrinkler);
+
         // Konzentration berechnen
         concentrationValue = Mathf.Clamp01(1f - (0.4f * eyeMovement + 0.3f * browActivity + 0.3f * lidTension));
 
@@ -101,12 +114,14 @@ public class FaceTrackingLogger : MonoBehaviour
 
         int yOffset = 50;
 
-        // Konzentration anzeigen
+        // Hauptwerte anzeigen
         GUI.Label(new Rect(xOffset, yOffset, 300, 30), $"Konzentration: {concentrationValue:F2}", guiStyle);
         yOffset += 30;
 
-        // Verkrampftheit anzeigen
         GUI.Label(new Rect(xOffset, yOffset, 300, 30), $"Verkrampftheit: {tensionValue:F2}", guiStyle);
+        yOffset += 30;
+
+        GUI.Label(new Rect(xOffset, yOffset, 300, 30), $"Fröhlichkeit: {happinessValue:F2}", guiStyle);
         yOffset += 30;
 
         // Einzelne Parameter anzeigen
