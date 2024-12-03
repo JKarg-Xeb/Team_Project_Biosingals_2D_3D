@@ -1,4 +1,7 @@
 using UnityEngine;
+using UnityEngine.Networking;
+using System.Collections;
+using Newtonsoft.Json; // Verwende Newtonsoft.Json
 
 public class FaceTrackingLogger : MonoBehaviour
 {
@@ -21,6 +24,9 @@ public class FaceTrackingLogger : MonoBehaviour
     private float concentrationValue = 0f;
     private float happinessValue = 0f;
 
+    // Server-URL (ersetze dies durch die Adresse deines Python-Servers)
+    [SerializeField] private string serverURL = "http://localhost:8080/face-data";
+
     void Start()
     {
         faceExpressions = GetComponent<OVRFaceExpressions>();
@@ -34,6 +40,9 @@ public class FaceTrackingLogger : MonoBehaviour
 
         guiStyle.fontSize = 18;
         guiStyle.normal.textColor = Color.white;
+
+        // Starte die Coroutine zum Senden der Daten alle 0,5 Sekunden
+        StartCoroutine(SendDataRoutine());
     }
 
     void Update()
@@ -136,5 +145,61 @@ public class FaceTrackingLogger : MonoBehaviour
 
         // Blinzelzähler anzeigen
         GUI.Label(new Rect(xOffset, yOffset + 20, 300, 30), $"Blinzelanzahl: {blinkCount}", guiStyle);
+    }
+
+    // Coroutine zum periodischen Senden der Daten
+    private IEnumerator SendDataRoutine()
+    {
+        while (true)
+        {
+            yield return new WaitForSeconds(0.5f); // Warte 0,5 Sekunden
+
+            // Erstelle ein Datenobjekt
+            var data = new
+            {
+                concentration = concentrationValue,
+                tension = tensionValue,
+                happiness = happinessValue,
+                eyeMovement = eyeMovement,
+                browActivity = browActivity,
+                lidTension = lidTension,
+                lipPress = lipPress,
+                blinkCount = blinkCount,
+                timestamp = System.DateTime.UtcNow.ToString("o") // ISO 8601 Format
+            };
+
+            // Serialisiere das Objekt in JSON mit Newtonsoft.Json
+            string jsonData = JsonConvert.SerializeObject(data);
+
+            // Sende die Daten an den Server
+            StartCoroutine(SendPostRequest(serverURL, jsonData));
+        }
+    }
+
+    private IEnumerator SendPostRequest(string url, string json)
+    {
+        // Erstelle eine neue POST-Anfrage mit dem JSON-Body
+        var request = new UnityWebRequest(url, "POST");
+        byte[] bodyRaw = System.Text.Encoding.UTF8.GetBytes(json);
+        request.uploadHandler = new UploadHandlerRaw(bodyRaw);
+        request.downloadHandler = new DownloadHandlerBuffer();
+        request.SetRequestHeader("Content-Type", "application/json");
+
+        // Sende die Anfrage und warte auf die Antwort
+        yield return request.SendWebRequest();
+
+        // Überprüfe auf Fehler
+        if (request.result != UnityWebRequest.Result.Success)
+        {
+            Debug.LogError($"Fehler beim Senden der Daten: {request.error}");
+            Debug.LogError($"Response Code: {request.responseCode}");
+            Debug.LogError($"Response Text: {request.downloadHandler.text}");
+        }
+        else
+        {
+            Debug.Log("Daten erfolgreich an den Server gesendet.");
+            // Optional: Verarbeite die Serverantwort, falls benötigt
+            // string responseText = request.downloadHandler.text;
+        }
     }
 }
