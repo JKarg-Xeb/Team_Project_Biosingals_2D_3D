@@ -42,174 +42,41 @@ initialize_csv(eyetracking_csv, [
 ])
 
 # API-Endpunkte
-@app.route("/api/graph-data", methods=['GET'])
-def graph_data():
-    data = {
-        'labels': ['Jack', 'Moritz', 'Marlene'],
-        'values': [5, 6, 7] 
-    }
-    return jsonify(data)
+@app.route('/face-data', methods=['POST'])
+def receive_face_data():
+    try:
+        data = request.get_json()
+        if not data:
+            app.logger.error("Keine Daten empfangen oder ungültiges JSON.")
+            return jsonify({"error": "Keine Daten empfangen"}), 400
 
-@app.route('/eye_tracking', methods=['POST'])
+        app.logger.debug(f"Face Daten empfangen: {data}")
+
+        # Verarbeite die Daten (z.B. speichere sie, analysiere sie, etc.)
+        # Hier kannst du die Daten nach Bedarf weiterverarbeiten
+
+        return jsonify({"status": "Face Daten empfangen"}), 200
+    except Exception as e:
+        app.logger.exception("Fehler beim Verarbeiten der Anfrage:")
+        return jsonify({"error": "Interner Serverfehler"}), 500
+
+@app.route('/eye-data', methods=['POST'])
 def receive_eye_data():
-    data = request.get_json()
-    print(f"Empfangene Eye-Tracking-Daten: {data}")
-    return jsonify({"status": "success"}), 200
-
-
-@app.route('/send_vr_data_rotation', methods=['POST'])
-def receive_vr_data_rotation():
-    data = request.get_json()
-    logging.debug(f"Empfangene JSON-Daten (Rotation): {data}")
-
-    if not data:
-        logging.error("Keine JSON-Daten empfangen")
-        return jsonify({"error": "Keine JSON-Daten empfangen"}), 400
-
     try:
-        posX = data['posX']
-        posY = data['posY']
-        posZ = data['posZ']
-        rotX = data['rotX']
-        rotY = data['rotY']
-        rotZ = data['rotZ']
-        rotW = data['rotW']
+        data = request.get_json()
+        if not data:
+            app.logger.error("Keine Daten empfangen oder ungültiges JSON.")
+            return jsonify({"error": "Keine Daten empfangen"}), 400
 
-        logging.info("\n--- Empfangene VR-Rotationsdaten ---")
-        logging.info(f"Positions: x={posX}, y={posY}, z={posZ}")
-        logging.info(f"Rotations: x={rotX}, y={rotY}, z={rotZ}, w={rotW}")
-        logging.info("---------------------------\n")
+        app.logger.debug(f"Eye Daten empfangen: {data}")
 
-        # Umwandlung in Euler-Winkel
-        quaternion = [rotX, rotY, rotZ, rotW]
-        rotation = R.from_quat(quaternion)
-        euler_angles = rotation.as_euler('xyz', degrees=True)
+        # Verarbeite die Daten (z.B. speichere sie, analysiere sie, etc.)
+        # Hier kannst du die Daten nach Bedarf weiterverarbeiten
 
-        # Daten per WebSocket an alle verbundenen Clients senden
-        updated_data = {
-            'posX': posX,
-            'posY': posY,
-            'posZ': posZ,
-            'pitch': euler_angles[0],
-            'yaw': euler_angles[1],
-            'roll': euler_angles[2]
-        }
-        socketio.emit('update_graph_rotation', updated_data)  # Separater Event
-
-        # Daten in CSV speichern
-        timestamp = datetime.utcnow().isoformat()
-        row = [timestamp, posX, posY, posZ, euler_angles[0], euler_angles[1], euler_angles[2]]
-        with open(rotation_csv, mode='a', newline='') as file:
-            writer = csv.writer(file)
-            writer.writerow(row)
-        logging.info(f"Rotationsdaten gespeichert: {row}")
-
-    except KeyError as e:
-        logging.error(f"Fehlendes Feld: {e.args[0]}")
-        return jsonify({"error": f"Fehlendes Feld: {e.args[0]}"}), 400
+        return jsonify({"status": "Eye Daten empfangen"}), 200
     except Exception as e:
-        logging.error(f"Fehler beim Verarbeiten der Rotationsdaten: {str(e)}")
-        return jsonify({"error": "Fehler beim Verarbeiten der Daten"}), 500
-
-    return jsonify({"message": "VR-Rotationsdaten empfangen"}), 200
-
-@app.route('/send_vr_data_eyetracking', methods=['POST'])
-def receive_vr_data_eyetracking():
-    data = request.get_json()
-    logging.debug(f"Empfangene JSON-Daten (Eye-Tracking): {data}")
-
-    if not data:
-        logging.error("Keine JSON-Daten empfangen")
-        return jsonify({"error": "Keine JSON-Daten empfangen"}), 400
-
-    try:
-        posX = data['posX']
-        posY = data['posY']
-        posZ = data['posZ']
-        rotX = data['rotX']
-        rotY = data['rotY']
-        rotZ = data['rotZ']
-        rotW = data['rotW']
-        
-        # Linkes Auge
-        leftGazeDirX = data.get('leftGazeDirX', 0.0)
-        leftGazeDirY = data.get('leftGazeDirY', 0.0)
-        leftGazeDirZ = data.get('leftGazeDirZ', 0.0)
-        leftGazeOriginX = data.get('leftGazeOriginX', 0.0)
-        leftGazeOriginY = data.get('leftGazeOriginY', 0.0)
-        leftGazeOriginZ = data.get('leftGazeOriginZ', 0.0)
-        
-        # Rechtes Auge
-        rightGazeDirX = data.get('rightGazeDirX', 0.0)
-        rightGazeDirY = data.get('rightGazeDirY', 0.0)
-        rightGazeDirZ = data.get('rightGazeDirZ', 0.0)
-        rightGazeOriginX = data.get('rightGazeOriginX', 0.0)
-        rightGazeOriginY = data.get('rightGazeOriginY', 0.0)
-        rightGazeOriginZ = data.get('rightGazeOriginZ', 0.0)
-
-        logging.info("\n--- Empfangene VR-Eye-Tracking-Daten ---")
-        logging.info(f"Positions: x={posX}, y={posY}, z={posZ}")
-        logging.info(f"Rotations: x={rotX}, y={rotY}, z={rotZ}, w={rotW}")
-        logging.info(f"Linkes Auge Gaze: dir=({leftGazeDirX}, {leftGazeDirY}, {leftGazeDirZ}), origin=({leftGazeOriginX}, {leftGazeOriginY}, {leftGazeOriginZ})")
-        logging.info(f"Rechtes Auge Gaze: dir=({rightGazeDirX}, {rightGazeDirY}, {rightGazeDirZ}), origin=({rightGazeOriginX}, {rightGazeOriginY}, {rightGazeOriginZ})")
-        logging.info("---------------------------\n")
-
-        # Umwandlung in Euler-Winkel
-        quaternion = [rotX, rotY, rotZ, rotW]
-        rotation = R.from_quat(quaternion)
-        euler_angles = rotation.as_euler('xyz', degrees=True)
-
-        # Daten per WebSocket an alle verbundenen Clients senden
-        updated_data = {
-            'posX': posX,
-            'posY': posY,
-            'posZ': posZ,
-            'pitch': euler_angles[0],
-            'yaw': euler_angles[1],
-            'roll': euler_angles[2],
-            'leftGazeDirX': leftGazeDirX,
-            'leftGazeDirY': leftGazeDirY,
-            'leftGazeDirZ': leftGazeDirZ,
-            'leftGazeOriginX': leftGazeOriginX,
-            'leftGazeOriginY': leftGazeOriginY,
-            'leftGazeOriginZ': leftGazeOriginZ,
-            'rightGazeDirX': rightGazeDirX,
-            'rightGazeDirY': rightGazeDirY,
-            'rightGazeDirZ': rightGazeDirZ,
-            'rightGazeOriginX': rightGazeOriginX,
-            'rightGazeOriginY': rightGazeOriginY,
-            'rightGazeOriginZ': rightGazeOriginZ
-        }
-        socketio.emit('update_graph_eyetracking', updated_data)  # Separater Event
-
-        # Daten in CSV speichern
-        timestamp = datetime.utcnow().isoformat()
-        row = [
-            timestamp, 
-            posX, posY, posZ, 
-            euler_angles[0], euler_angles[1], euler_angles[2], 
-            leftGazeDirX, leftGazeDirY, leftGazeDirZ, 
-            leftGazeOriginX, leftGazeOriginY, leftGazeOriginZ, 
-            rightGazeDirX, rightGazeDirY, rightGazeDirZ, 
-            rightGazeOriginX, rightGazeOriginY, rightGazeOriginZ
-        ]
-        with open(eyetracking_csv, mode='a', newline='') as file:
-            writer = csv.writer(file)
-            writer.writerow(row)
-        logging.info(f"Eye-Tracking-Daten gespeichert: {row}")
-
-    except KeyError as e:
-        logging.error(f"Fehlendes Feld: {e.args[0]}")
-        return jsonify({"error": f"Fehlendes Feld: {e.args[0]}"}), 400
-    except Exception as e:
-        logging.error(f"Fehler beim Verarbeiten der Eye-Tracking-Daten: {str(e)}")
-        return jsonify({"error": "Fehler beim Verarbeiten der Daten"}), 500
-
-    return jsonify({"message": "VR-Eye-Tracking-Daten empfangen"}), 200
-
-
-
-    
+        app.logger.exception("Fehler beim Verarbeiten der Anfrage:")
+        return jsonify({"error": "Interner Serverfehler"}), 500
 
 if __name__ == "__main__": 
     socketio.run(app, debug=True, port=8080)
