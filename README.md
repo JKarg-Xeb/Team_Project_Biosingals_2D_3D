@@ -615,15 +615,14 @@ Please adhere to our [Code of Conduct](CODE_OF_CONDUCT.md) when interacting with
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE). You are free to use, modify, and distribute the code as per the terms outlined in the license.
+You are free to use, modify, and distribute the code as per the terms outlined in the license.
 
-**Key Points of the MIT License:**
+**Key Points**
 
 - **Permission:** Granted to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the software.
 - **Condition:** The license notice must be included in all copies or substantial portions of the software.
 - **Limitation:** The software is provided "as is", without any warranty. The authors are not liable for any claims, damages, or other liabilities.
 
-For more details, refer to the [LICENSE](LICENSE) file in this repository.
 
 ## Detailed Code Structure
 
