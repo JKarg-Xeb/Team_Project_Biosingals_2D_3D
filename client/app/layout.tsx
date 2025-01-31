@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "@/styles/globals.css";
 import Navbar from "@/components/Navbar";
+import { DataProvider } from "@/context/DataContext";
 
 
 
@@ -19,7 +20,9 @@ export default function RootLayout({
         <body>
             <main className='app'>
                 <Navbar></Navbar>
-                {children}
+                  <DataProvider>
+                    {children}
+                  </DataProvider>
             </main>
         </body>
     </html>

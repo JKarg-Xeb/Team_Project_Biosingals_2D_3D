@@ -1,13 +1,15 @@
-"use client" 
+// src/app/page.tsx
 
-import Graph_Component from "@/components/Graph_Component";
+import React from "react";
+import Dashboard from "@/components/Dashboard";
+import { DataProvider } from "@/context/DataContext";
 
-export default function Home() {
-  
-
+const Page: React.FC = () => {
   return (
-    <section>
-      <Graph_Component></Graph_Component>
-    </section>
+    <DataProvider>
+      <Dashboard />
+    </DataProvider>
   );
-}
+};
+
+export default Page;

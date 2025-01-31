@@ -9,7 +9,7 @@ gsap.registerPlugin(ScrollTrigger);
 
 export default function Navbar() {
     
-    const NavList = ["Über Projekt" , "new Game", "Overview"];
+    const NavList = ['Dashboard'];
 
     useEffect(() => {
         gsap.fromTo("#nav_list .nav-item", {
