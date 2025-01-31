@@ -11,6 +11,7 @@ Welcome to the **Biosignal Decision-Making Research** project! This repository c
 - [Installation](#installation)
   - [Prerequisites](#prerequisites)
   - [Setup Steps](#setup-steps)
+  - [Requirements](#requirements)
 - [Configuration](#configuration)
   - [Adjusting Data Acquisition Rate](#adjusting-data-acquisition-rate)
 - [Usage](#usage)
@@ -18,10 +19,13 @@ Welcome to the **Biosignal Decision-Making Research** project! This repository c
   - [Launching the Web Interface](#launching-the-web-interface)
 - [API Endpoints](#api-endpoints)
 - [Faker Module](#faker-module)
+- [CSV Handling](#csv-handling)
+  - [CSV File Structure](#csv-file-structure)
+  - [Automatic CSV Type Assignment](#automatic-csv-type-assignment)
 - [Troubleshooting](#troubleshooting)
 - [Contributing](#contributing)
 - [License](#license)
-- [Contact](#contact)
+
 
 ## Project Overview
 
@@ -44,11 +48,11 @@ This project is designed to investigate how biosignals vary during decision-maki
 
 - **Backend:**
   - **Python:** Utilized for server-side logic, data acquisition, and handling CSV operations.
+  - **Flask & Flask-SocketIO:** Facilitates communication between the client (web interface) and server scripts.
 - **Frontend:**
   - **JavaScript (Node.js):** Powers the web interface, enabling dynamic interactions and real-time updates.
-  - **Next.js**
-- **Web Server:**
-  - **Local Server:** Facilitates communication between the client (web interface) and server scripts.
+- **Data Acquisition:**
+  - **pylsl:** Python interface for the Lab Streaming Layer (LSL) used in biosignal data acquisition.
 - **Data Format:**
   - **CSV (Comma-Separated Values):** Chosen for its simplicity and ease of use in data analysis.
 - **Other Tools:**
@@ -67,8 +71,8 @@ Understanding the project’s directory layout is crucial for efficient navigati
 │   ├── faker.py
 │   ├── requirements.txt
 │   └── data
-│       ├── YYYY-MM-DD_2D.csv
-│       └── YYYY-MM-DD_3D.csv
+│       ├── YYYYMMDD_HHMMSS_2D.csv
+│       └── YYYYMMDD_HHMMSS_3D.csv
 ├── client
 │   ├── public
 │   ├── src
@@ -80,11 +84,11 @@ Understanding the project’s directory layout is crucial for efficient navigati
 ```
 
 - **server/**: Contains all backend-related scripts and data.
-  - **server.py**: Manages the server operations, including handling requests from the web interface and games.
-  - **datenaquisition.py**: Responsible for capturing biosignal data and storing it in memory.
-  - **csv_handler.py**: Handles the conversion of biosignal data into CSV format and manages file storage.
-  - **faker.py**: Simulates biosignal data for testing and development.
-  - **data/**: Stores all CSV files, named using the creation date and environment type (e.g., `2025-01-31_2D.csv`).
+  - **server.py**: Manages server operations, including handling HTTP requests, WebSocket connections, and coordinating data acquisition.
+  - **datenaquisition.py**: Responsible for capturing biosignal data from LSL streams and placing it into a shared queue for processing.
+  - **csv_handler.py**: Handles the conversion of biosignal and game data into CSV format and manages file storage.
+  - **faker.py**: Simulates biosignal data for testing and development purposes.
+  - **data/**: Stores all CSV files, named using the creation date and environment type (e.g., `20250131_123045_2D.csv`).
 - **client/**: Contains all frontend-related files.
   - **public/**: Static assets for the web interface.
   - **src/**: Source code for the frontend application.
@@ -95,7 +99,6 @@ Understanding the project’s directory layout is crucial for efficient navigati
 ## Installation
 
 To set up this project locally, follow the steps below. Ensure that all prerequisites are met before proceeding.
-After installation, ensure that every import is locally installed. (for example: flask, pylsl, pandas)
 
 ### Prerequisites
 
@@ -138,6 +141,35 @@ Before installing, make sure you have the following software installed on your s
 
    - **Tip:** Ensure that `npm` completes the installation without errors. If issues arise, verify your Node.js and npm versions.
 
+### Requirements
+
+#### Server Requirements
+
+The server relies on several Python packages to function correctly. Below is a list of required packages along with their purposes:
+
+- **Flask**: Web framework for handling HTTP requests.
+- **Flask-SocketIO**: Enables real-time communication between the server and clients via WebSockets.
+- **flask_cors**: Allows Cross-Origin Resource Sharing (CORS), enabling the frontend to communicate with the server if they run on different ports.
+- **pylsl**: Python interface for the Lab Streaming Layer (LSL), used for biosignal data acquisition.
+- **pandas**: Data manipulation and analysis library, used for handling CSV operations.
+
+**Example `requirements.txt`:**
+
+```plaintext
+Flask==2.0.3
+Flask-SocketIO==5.2.0
+flask_cors==3.0.10
+pylsl==1.14.1
+pandas==1.3.5
+eventlet==0.33.0
+```
+
+- **Note:** Ensure that the versions are compatible with your system. Adjust the versions as necessary based on your environment and compatibility requirements.
+
+#### Client Requirements
+
+The client side is managed using Node.js and npm. The dependencies are specified in the `package.json` file within the `client` directory. Running `npm install` as described in the setup steps will automatically install all necessary frontend packages.
+
 ## Configuration
 
 ### Adjusting Data Acquisition Rate
@@ -150,7 +182,7 @@ The data acquisition rate determines how frequently biosignal data is captured. 
 **Current Setting:**
 
 ```python
-desired_sampling_rate = 100  # Current sampling rate set to 100 Hz
+desired_sampling_rate = 100  # Desired sampling rate in Hz
 ```
 
 **How to Adjust:**
@@ -225,15 +257,15 @@ The server exposes API endpoints to facilitate data retrieval and management. Be
 ### GET `/all`
 
 - **Description:** Retrieves a list of all stored CSV files from the server.
-- **Endpoint:** `http://localhost:<server_port>/all`
+- **Endpoint:** `http://localhost:8080/all`
 - **Response:**
 
   ```json
   {
     "files": [
-      "2025-01-31_2D.csv",
-      "2025-01-31_3D.csv",
-      "2025-02-01_2D.csv",
+      "20250131_123045_2D.csv",
+      "20250131_123045_3D.csv",
+      "20250201_093015_2D.csv",
       ...
     ]
   }
@@ -246,7 +278,7 @@ The server exposes API endpoints to facilitate data retrieval and management. Be
 - **Example Request:**
 
   ```bash
-  curl http://localhost:8000/all
+  curl http://localhost:8080/all
   ```
 
 - **Example Response:**
@@ -254,16 +286,97 @@ The server exposes API endpoints to facilitate data retrieval and management. Be
   ```json
   {
     "files": [
-      "2025-01-31_2D.csv",
-      "2025-01-31_3D.csv",
-      "2025-02-01_2D.csv"
+      "20250131_123045_2D.csv",
+      "20250131_123045_3D.csv",
+      "20250201_093015_2D.csv"
     ]
   }
   ```
 
-### Additional Endpoints
+### GET `/get_all_csv_data`
 
-Depending on future developments, additional API endpoints may be introduced to support more functionalities such as individual file retrieval, data filtering, or user management.
+- **Description:** Retrieves all CSV data, including all stored files and the current session.
+- **Endpoint:** `http://localhost:8080/get_all_csv_data`
+- **Response:**
+
+  ```json
+  {
+    "data": [
+      {
+        "filename": "20250131_123045_2D.csv",
+        "data": [ ... ]
+      },
+      {
+        "filename": "20250131_123045_3D.csv",
+        "data": [ ... ]
+      },
+      {
+        "filename": "current_session",
+        "data": [ ... ]
+      }
+    ]
+  }
+  ```
+
+- **Usage:**
+
+  Retrieve all collected data, including ongoing session data, for comprehensive analysis.
+
+### POST `/2D_Game_Ping`
+
+- **Description:** Receives game data from the 2D environment.
+- **Endpoint:** `http://localhost:8080/2D_Game_Ping`
+- **Payload:**
+
+  ```json
+  {
+    "klickZeiten": [ ... ],
+    "finalKontostand": 1000,
+    "cardIndex": 5,
+    "currentReward": 50,
+    "timestamp": "2025-01-31T12:30:45Z"
+  }
+  ```
+
+- **Response:**
+
+  ```json
+  {
+    "message": "Daten erfolgreich empfangen"
+  }
+  ```
+
+### POST `/3D_Game_Ping`
+
+- **Description:** Receives game data from the 3D environment.
+- **Endpoint:** `http://localhost:8080/3D_Game_Ping`
+- **Payload:**
+
+  ```json
+  {
+    "klickZeiten": [ ... ],
+    "finalKontostand": 1500,
+    "cardIndex": 7,
+    "currentReward": 75,
+    "timestamp": "2025-01-31T12:31:00Z"
+  }
+  ```
+
+- **Response:**
+
+  ```json
+  {
+    "message": "Daten erfolgreich empfangen"
+  }
+  ```
+
+### GET `/sse_game_data`
+
+- **Description:** Establishes a Server-Sent Events (SSE) connection to stream game data in real-time.
+- **Endpoint:** `http://localhost:8080/sse_game_data`
+- **Usage:**
+
+  Connect to this endpoint from the frontend to receive live updates of game data.
 
 ## Faker Module
 
@@ -271,7 +384,7 @@ To facilitate testing and development, especially in scenarios where actual bios
 
 ### Features of the Faker Module
 
-- **Simulated Biosignals:** Generates synthetic data that mimics real biosignals, including heart rate and other relevant metrics.
+- **Simulated Biosignals:** Generates synthetic data that mimics real biosignals, including heart rate (EDA) and ECG.
 - **Configurable Parameters:** Allows customization of data generation parameters to simulate different scenarios and conditions.
 - **Seamless Integration:** Can be easily toggled on or off within the server to switch between real and simulated data.
 
@@ -279,11 +392,16 @@ To facilitate testing and development, especially in scenarios where actual bios
 
 1. **Enable the Faker Module:**
 
-   In `server.py`, ensure that the faker is imported and initialized correctly. Typically, this involves setting a flag or invoking the faker during data acquisition.
+   The faker is integrated within the server and can be started by running the `faker.py` script independently if needed.
+
+   ```bash
+   cd server
+   python faker.py
+   ```
 
 2. **Adjust Faker Settings:**
 
-   Customize the faker's behavior by modifying parameters in `faker.py` as needed.
+   Customize the faker's behavior by modifying parameters in `faker.py` as needed, such as the frequency and amplitude of simulated signals.
 
 3. **Run the Server:**
 
@@ -294,6 +412,39 @@ To facilitate testing and development, especially in scenarios where actual bios
 - **Development Flexibility:** Continue developing and testing the web interface and server functionalities without dependency on actual biosignal hardware.
 - **Reliable Testing:** Ensure that the system can handle data streams effectively before deploying with real biosignal sources.
 - **Scenario Simulation:** Create diverse testing scenarios by adjusting faker parameters to simulate different physiological states or conditions.
+
+## CSV Handling
+
+The system efficiently manages the storage and organization of collected data by converting biosignal and game data into well-structured CSV files.
+
+### CSV File Structure
+
+Each CSV file is named using the creation date and environment type (2D or 3D), following the format: `YYYYMMDD_HHMMSS_2D.csv` or `YYYYMMDD_HHMMSS_3D.csv`. For example:
+
+- `20250131_123045_2D.csv`
+- `20250131_123045_3D.csv`
+
+**Column Order:**
+
+```
+received_timestamp,cardIndex,currentReward,finalKontostand,klickZeiten,timestamp,,values
+```
+
+- **received_timestamp:** Server-side timestamp when the data was received.
+- **cardIndex:** Index of the selected card in the game (2D/3D).
+- **currentReward:** Current reward value or change in the account balance.
+- **finalKontostand:** Final account balance at the end of the game.
+- **klickZeiten:** Times of clicks or interactions during the game.
+- **timestamp:** Original timestamp from the game data.
+- **:** Empty column for separation.
+- **values:** Biosignal values (e.g., EDA, ECG).
+
+### Automatic CSV Type Assignment
+
+- **Game Data Present:** If game data (2D or 3D) is received, the CSV file is saved with the corresponding type (`2D` or `3D`).
+- **No Game Data Received:** If no game data is received during the session, the CSV file defaults to `2D` type.
+
+This ensures consistent categorization and ease of data analysis based on the environment type.
 
 ## Troubleshooting
 
@@ -371,7 +522,7 @@ While the system is designed for robustness, you may encounter issues during set
 
 1. **Verify Write Permissions:**
 
-   Ensure that the server has the necessary permissions to write to the `data` directory.
+   Ensure that the server has the necessary permissions to write to the `server/data` directory.
 
    ```bash
    ls -ld server/data
@@ -473,3 +624,212 @@ This project is licensed under the [MIT License](LICENSE). You are free to use, 
 - **Limitation:** The software is provided "as is", without any warranty. The authors are not liable for any claims, damages, or other liabilities.
 
 For more details, refer to the [LICENSE](LICENSE) file in this repository.
+
+## Detailed Code Structure
+
+To provide a deeper understanding of how the system operates, here's an overview of the key scripts and their functionalities based on the provided code snippets.
+
+### `server.py`
+
+This is the main server script that initializes the Flask application, sets up routes for data acquisition, and manages real-time data streaming via Server-Sent Events (SSE).
+
+**Key Components:**
+
+- **Flask & Flask-SocketIO:** Handles HTTP requests and WebSocket connections.
+- **Routes:**
+  - `/start_acquisition`: Starts biosignal data acquisition.
+  - `/stop_acquisition`: Stops biosignal data acquisition.
+  - `/get_lsl_data`: Retrieves available LSL data.
+  - `/sse_game_data`: Streams game data to connected clients in real-time.
+  - `/get_all_csv_data`: Retrieves all CSV data, including current sessions.
+  - `/2D_Game_Ping` & `/3D_Game_Ping`: Receives game data from 2D and 3D environments, respectively.
+- **Threading:** Manages concurrent data acquisition and handling.
+- **Logging:** Provides detailed logs for monitoring server activities.
+- **Concurrency Controls:** Uses threading locks to ensure thread-safe operations on shared resources like data queues and game data storage.
+
+**Example Snippet:**
+
+```python
+@app.route("/start_acquisition", methods=["GET"])
+def start_acquisition_route():
+    # Starts the data acquisition thread and initializes CSV session
+    ...
+```
+
+### `faker.py`
+
+This script simulates biosignal data, generating synthetic EDA and ECG signals that mimic real physiological data. It's useful for testing the system without actual biosignal hardware.
+
+**Key Components:**
+
+- **pylsl:** Creates a fake LSL stream named `FakeBio` with three channels: Index, EDA, and ECG.
+- **Data Generation:** Continuously generates sinusoidal signals with added noise to simulate real biosignals.
+- **Threading:** Runs the data generation in a separate thread to mimic real-time data streaming.
+- **Real-Time Simulation:** Sends data at a rate of 50 Hz to emulate real-time data acquisition.
+
+**Example Snippet:**
+
+```python
+def generate_fake_data(outlet):
+    while True:
+        # Simulate EDA and ECG values with noise
+        eda_value = round(eda_base + eda_noise, 3)
+        ecg_value = round(ecg_base + ecg_noise, 3)
+        outlet.push_sample([sample_index, eda_value, ecg_value], timestamp)
+        time.sleep(0.02)  # 50 Hz
+```
+
+### `datenaquisition.py`
+
+Handles the continuous acquisition of biosignal data from available LSL streams, applying downsampling as necessary.
+
+**Key Components:**
+
+- **LSL Streams:** Resolves and connects to available LSL streams for data acquisition.
+- **Downsampling:** Reduces the sampling rate to the desired frequency to manage data volume.
+- **Queue Management:** Places acquired data into a shared queue for processing by the server.
+- **Error Handling:** Implements robust error handling to manage stream connection issues and data retrieval errors.
+
+**Example Snippet:**
+
+```python
+def start_acquisition(data_queue, stop_event):
+    # Resolves LSL streams and starts data acquisition
+    while not streams and not stop_event.is_set():
+        streams = resolve_streams()
+        time.sleep(2)
+    ...
+```
+
+### `csv_handler.py`
+
+Manages the creation and manipulation of CSV files for storing biosignal and game data. It ensures data is correctly formatted and saved with appropriate filenames.
+
+**Key Components:**
+
+- **Session Management:** Starts and stops data recording sessions, managing the accumulation of data points.
+- **Data Formatting:** Formats incoming data into CSV-compatible structures, ensuring consistency in column order.
+- **File Naming:** Generates filenames based on the session's start time and environment type (`2D` or `3D`).
+- **Data Retrieval:** Provides functions to retrieve all stored CSV data for analysis.
+- **Thread Safety:** Uses threading locks to ensure safe concurrent access to session data.
+
+**Example Snippet:**
+
+```python
+def start_session(self):
+    with self.session_lock:
+        if self.session_active:
+            logging.info("A session is already running.")
+            return
+        self.session_start_time = datetime.now(timezone.utc)
+        self.current_session_data = []
+        self.session_active = True
+        logging.info(f"Session started at {self.session_start_time.isoformat()}")
+```
+
+### `requirements.txt`
+
+Lists all Python dependencies required for the server to function correctly. Ensure that the versions are compatible with your system and adjust them as necessary.
+
+**Example `requirements.txt`:**
+
+```plaintext
+Flask==2.0.3
+Flask-SocketIO==5.2.0
+flask_cors==3.0.10
+pylsl==1.14.1
+pandas==1.3.5
+eventlet==0.33.0
+```
+
+- **Note:** The `eventlet` package is often used with Flask-SocketIO for asynchronous operations. Ensure it's included if required by your setup.
+
+## Additional Enhancements
+
+Based on the provided code, here are some additional details and recommendations to further enhance the README:
+
+### Thread Safety and Concurrency
+
+The server employs threading and locking mechanisms to ensure thread safety when accessing shared resources like data queues and storage lists.
+
+**Example:**
+
+```python
+twoDgame_data_lock = threading.Lock()
+with twoDgame_data_lock:
+    twoDgame_data_storage.append(new_data)
+```
+
+### Server-Sent Events (SSE) for Real-Time Data Streaming
+
+The `/sse_game_data` endpoint utilizes SSE to stream game data to connected clients in real-time. This allows the frontend to receive updates without polling.
+
+**Example:**
+
+```python
+@app.route('/sse_game_data', methods=['GET'])
+def sse_game_data():
+    def event_stream():
+        q = queue.Queue()
+        with clients_lock:
+            clients.append(q)
+        try:
+            while True:
+                data = q.get()
+                yield f"data: {json.dumps(data)}\n\n"
+        except GeneratorExit:
+            with clients_lock:
+                clients.remove(q)
+    return Response(event_stream(), content_type='text/event-stream')
+```
+
+### Logging and Monitoring
+
+Comprehensive logging is implemented across the server and CSV handler to facilitate debugging and monitoring of system activities.
+
+**Example:**
+
+```python
+logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s')
+app.logger.info("Data acquisition started.")
+```
+
+### Handling Multiple Clients
+
+The server manages multiple SSE clients by maintaining a list of queues (`clients`) and ensuring thread-safe access using locks.
+
+**Example:**
+
+```python
+clients = []
+clients_lock = threading.Lock()
+with clients_lock:
+    clients.append(q)
+```
+
+### Data Integrity and Session Management
+
+The CSV handler ensures that data from different sources (biosignals and game data) are correctly categorized and stored, maintaining data integrity throughout sessions.
+
+**Example:**
+
+```python
+if 'cardIndex' in data or 'currentReward' in data:
+    # 2D-Game Data
+    ...
+elif 'values' in data:
+    # LSL Data
+    ...
+else:
+    logging.warning("Unknown data source. Data not saved.")
+```
+
+## Final Notes
+
+This project provides a robust framework for collecting, managing, and analyzing biosignal data in the context of decision-making tasks within different environments. By integrating real-time data acquisition, comprehensive data management, and a user-friendly interface, it serves as a valuable tool for researchers and developers aiming to explore the physiological underpinnings of decision-making processes.
+
+For further enhancements, consider implementing additional API endpoints, integrating more sophisticated data analysis tools, or expanding the web interface to include more interactive features.
+
+---
+
+*This README was generated and customized to provide comprehensive guidance and information about the project. For any updates or changes, please refer to the latest version in the repository.*
